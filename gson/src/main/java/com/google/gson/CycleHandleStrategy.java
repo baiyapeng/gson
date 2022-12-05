@@ -10,6 +10,10 @@ public interface CycleHandleStrategy {
 
     String PLACEHOLDER_PREFIX = "$ref:";
 
+    String REGULAR_EXPRESSION = "\\$ref:[0-9]+";
+
+    String REPLACE_EXPRESSION = "\\$ref:";
+
     /**
      * 不处理, 默认策略
      */

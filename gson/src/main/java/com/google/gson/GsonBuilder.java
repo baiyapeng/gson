@@ -169,7 +169,7 @@ public final class GsonBuilder {
 
   public GsonBuilder setCycleHandleStrategy(CycleHandleStrategy cycleHandleStrategy) {
     Objects.requireNonNull(cycleHandleStrategy);
-    CycleContextHolder.setCycleHandleStrategy(cycleHandleStrategy);
+    CycleSerializationContextHolder.setCycleHandleStrategy(cycleHandleStrategy);
     return this;
   }
 

@@ -16,10 +16,7 @@
 
 package com.google.gson.internal.bind;
 
-import com.google.gson.CycleContextHolder;
-import com.google.gson.Gson;
-import com.google.gson.TypeAdapter;
-import com.google.gson.TypeAdapterFactory;
+import com.google.gson.*;
 import com.google.gson.internal.$Gson$Types;
 import com.google.gson.internal.ConstructorConstructor;
 import com.google.gson.internal.ObjectConstructor;
@@ -71,18 +68,30 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
       this.constructor = constructor;
     }
 
+    @SuppressWarnings("unchecked")
     @Override public Collection<E> read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
         return null;
       }
-
       Collection<E> collection = constructor.construct();
+      if (in.peek() == JsonToken.STRING) {
+        Object handle = CycleDeserializationContextHolder.handle(in);
+        collection.addAll((Collection<E>) handle);
+        return collection;
+      }
+
       in.beginArray();
+
+      CycleDeserializationContextHolder.push(collection);
+
       while (in.hasNext()) {
         E instance = elementTypeAdapter.read(in);
         collection.add(instance);
       }
+
+      CycleDeserializationContextHolder.pop();
+
       in.endArray();
       return collection;
     }
@@ -93,20 +102,20 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
         return;
       }
 
-      boolean handle = CycleContextHolder.handle(out, collection);
+      boolean handle = CycleSerializationContextHolder.handle(out, collection);
       if (handle) {
         return;
       }
 
       out.beginArray();
 
-      CycleContextHolder.push(collection);
+      CycleSerializationContextHolder.push(collection);
 
       for (E element : collection) {
         elementTypeAdapter.write(out, element);
       }
 
-      CycleContextHolder.pop();
+      CycleSerializationContextHolder.pop();
 
       out.endArray();
     }

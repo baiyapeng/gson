@@ -16,11 +16,7 @@
 
 package com.google.gson.internal.bind;
 
-import com.google.gson.Gson;
-import com.google.gson.ToNumberPolicy;
-import com.google.gson.ToNumberStrategy;
-import com.google.gson.TypeAdapter;
-import com.google.gson.TypeAdapterFactory;
+import com.google.gson.*;
 import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
@@ -92,7 +88,8 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
   private Object readTerminal(JsonReader in, JsonToken peeked) throws IOException {
     switch (peeked) {
       case STRING:
-        return in.nextString();
+        String s = in.nextString();
+        return CycleDeserializationContextHolder.match(s) ? CycleDeserializationContextHolder.contains(s) : s;
       case NUMBER:
         return toNumberStrategy.readNumber(in);
       case BOOLEAN:

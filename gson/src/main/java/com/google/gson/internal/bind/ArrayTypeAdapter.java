@@ -64,27 +64,52 @@ public final class ArrayTypeAdapter<E> extends TypeAdapter<Object> {
       return null;
     }
 
+    if (in.peek() == JsonToken.STRING) {
+      return CycleDeserializationContextHolder.handle(in);
+    }
+
     ArrayList<E> list = new ArrayList<>();
     in.beginArray();
+
+    if (componentType.isPrimitive()) {
+      Object array = Array.newInstance(componentType, 0);
+      CycleDeserializationContextHolder.push(array);
+    } else {
+      @SuppressWarnings("unchecked")
+      E[] array = (E[]) Array.newInstance(componentType, 0);
+      CycleDeserializationContextHolder.push(array);
+    }
+
     while (in.hasNext()) {
       E instance = componentTypeAdapter.read(in);
       list.add(instance);
     }
-    in.endArray();
 
     int size = list.size();
-    // Have to copy primitives one by one to primitive array
+
     if (componentType.isPrimitive()) {
       Object array = Array.newInstance(componentType, size);
       for (int i = 0; i < size; i++) {
         Array.set(array, i, list.get(i));
       }
+
+      CycleDeserializationContextHolder.compute(array);
+
+      in.endArray();
       return array;
     }
     // But for Object[] can use ArrayList.toArray
     else {
       @SuppressWarnings("unchecked")
       E[] array = (E[]) Array.newInstance(componentType, size);
+      while (in.hasNext()) {
+        E instance = componentTypeAdapter.read(in);
+        list.add(instance);
+      }
+
+      CycleDeserializationContextHolder.compute(array);
+
+      in.endArray();
       return list.toArray(array);
     }
   }
@@ -95,14 +120,14 @@ public final class ArrayTypeAdapter<E> extends TypeAdapter<Object> {
       return;
     }
 
-    boolean handle = CycleContextHolder.handle(out, array);
+    boolean handle = CycleSerializationContextHolder.handle(out, array);
     if (handle) {
       return;
     }
 
     out.beginArray();
 
-    CycleContextHolder.push(array);
+    CycleSerializationContextHolder.push(array);
 
     for (int i = 0, length = Array.getLength(array); i < length; i++) {
       @SuppressWarnings("unchecked")
@@ -110,7 +135,7 @@ public final class ArrayTypeAdapter<E> extends TypeAdapter<Object> {
       componentTypeAdapter.write(out, value);
     }
 
-    CycleContextHolder.pop();
+    CycleSerializationContextHolder.pop();
 
     out.endArray();
   }

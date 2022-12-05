@@ -15,11 +15,11 @@ import java.util.Objects;
  * @author baiyap
  * @date 2022-11-29 12:50:17
  */
-public class CycleContextHolder {
+public class CycleSerializationContextHolder {
 
     private static CycleHandleStrategy cycleHandleStrategy = CycleHandleStrategy.NONE;
 
-    private static ThreadLocal<Deque<Long>> stack = new ThreadLocal<>();
+    private static final ThreadLocal<Deque<Long>> DEQUE_THREAD_LOCAL = new ThreadLocal<>();
 
     public static boolean handle(JsonWriter out, Object obj) throws IOException {
         Integer layer = contains(obj);
@@ -38,14 +38,14 @@ public class CycleContextHolder {
     }
 
     static void setCycleHandleStrategy(CycleHandleStrategy cycleHandleStrategy) {
-        CycleContextHolder.cycleHandleStrategy = cycleHandleStrategy;
+        CycleSerializationContextHolder.cycleHandleStrategy = cycleHandleStrategy;
     }
 
     public static void push(long address) {
-        Deque<Long> deque = stack.get();
+        Deque<Long> deque = DEQUE_THREAD_LOCAL.get();
         if (deque == null) {
             deque = new ArrayDeque<>();
-            stack.set(deque);
+            DEQUE_THREAD_LOCAL.set(deque);
         }
         deque.push(address);
         // System.out.println(Arrays.toString(deque.toArray(new Long[0])));
@@ -57,18 +57,18 @@ public class CycleContextHolder {
     }
 
     public static void pop() {
-        Deque<Long> deque = stack.get();
+        Deque<Long> deque = DEQUE_THREAD_LOCAL.get();
         if (deque != null) {
             deque.pop();
         }
     }
 
     public static void clear() {
-        stack.remove();
+        DEQUE_THREAD_LOCAL.remove();
     }
 
     public static Integer contains(long address) {
-        Deque<Long> deque = stack.get();
+        Deque<Long> deque = DEQUE_THREAD_LOCAL.get();
         if (deque == null) {
             return null;
         }

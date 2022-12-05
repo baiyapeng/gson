@@ -353,14 +353,14 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
         return;
       }
 
-      boolean handle = CycleContextHolder.handle(out, value);
+      boolean handle = CycleSerializationContextHolder.handle(out, value);
       if (handle) {
         return;
       }
 
       out.beginObject();
 
-      CycleContextHolder.push(value);
+      CycleSerializationContextHolder.push(value);
 
       try {
         for (BoundField boundField : boundFields.values()) {
@@ -370,11 +370,12 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
         throw ReflectionHelper.createExceptionForUnexpectedIllegalAccess(e);
       }
 
-      CycleContextHolder.pop();
+      CycleSerializationContextHolder.pop();
 
       out.endObject();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public T read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
@@ -382,7 +383,13 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
         return null;
       }
 
+      if (in.peek() == JsonToken.STRING) {
+        return (T) CycleDeserializationContextHolder.handle(in);
+      }
+
       A accumulator = createAccumulator();
+
+      CycleDeserializationContextHolder.push(accumulator);
 
       try {
         in.beginObject();
@@ -401,6 +408,9 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
         throw ReflectionHelper.createExceptionForUnexpectedIllegalAccess(e);
       }
       in.endObject();
+
+      CycleDeserializationContextHolder.pop();
+
       return finalize(accumulator);
     }
 

@@ -833,7 +833,7 @@ public final class Gson {
       writer.setLenient(oldLenient);
       writer.setHtmlSafe(oldHtmlSafe);
       writer.setSerializeNulls(oldSerializeNulls);
-      CycleContextHolder.clear();
+      CycleSerializationContextHolder.clear();
     }
   }
 
@@ -1234,6 +1234,7 @@ public final class Gson {
       throw error;
     } finally {
       reader.setLenient(oldLenient);
+      CycleDeserializationContextHolder.clear();
     }
   }
 

@@ -151,6 +151,8 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
       this.constructor = constructor;
     }
 
+
+    @SuppressWarnings("unchecked")
     @Override public Map<K, V> read(JsonReader in) throws IOException {
       JsonToken peek = in.peek();
       if (peek == JsonToken.NULL) {
@@ -159,6 +161,15 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
       }
 
       Map<K, V> map = constructor.construct();
+
+      if (in.peek() == JsonToken.STRING) {
+        Object handle = CycleDeserializationContextHolder.handle(in);
+        map.putAll((Map<K, V>) handle);
+        return map;
+      }
+
+
+      CycleDeserializationContextHolder.push(map);
 
       if (peek == JsonToken.BEGIN_ARRAY) {
         in.beginArray();
@@ -186,6 +197,9 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
         }
         in.endObject();
       }
+
+      CycleDeserializationContextHolder.pop();
+
       return map;
     }
 
@@ -197,21 +211,21 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
 
       if (!complexMapKeySerialization) {
 
-        boolean handle = CycleContextHolder.handle(out, map);
+        boolean handle = CycleSerializationContextHolder.handle(out, map);
         if (handle) {
           return;
         }
 
         out.beginObject();
 
-        CycleContextHolder.push(map);
+        CycleSerializationContextHolder.push(map);
 
         for (Map.Entry<K, V> entry : map.entrySet()) {
           out.name(String.valueOf(entry.getKey()));
           valueTypeAdapter.write(out, entry.getValue());
         }
 
-        CycleContextHolder.pop();
+        CycleSerializationContextHolder.pop();
 
         out.endObject();
         return;
