@@ -16,9 +16,7 @@
 
 package com.google.gson.internal.bind;
 
-import com.google.gson.Gson;
-import com.google.gson.TypeAdapter;
-import com.google.gson.TypeAdapterFactory;
+import com.google.gson.*;
 import com.google.gson.internal.$Gson$Types;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
@@ -97,12 +95,23 @@ public final class ArrayTypeAdapter<E> extends TypeAdapter<Object> {
       return;
     }
 
+    boolean handle = CycleContextHolder.handle(out, array);
+    if (handle) {
+      return;
+    }
+
     out.beginArray();
+
+    CycleContextHolder.push(array);
+
     for (int i = 0, length = Array.getLength(array); i < length; i++) {
       @SuppressWarnings("unchecked")
       E value = (E) Array.get(array, i);
       componentTypeAdapter.write(out, value);
     }
+
+    CycleContextHolder.pop();
+
     out.endArray();
   }
 }

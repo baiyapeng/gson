@@ -16,6 +16,7 @@
 
 package com.google.gson.internal.bind;
 
+import com.google.gson.CycleContextHolder;
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
@@ -92,10 +93,21 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
         return;
       }
 
+      boolean handle = CycleContextHolder.handle(out, collection);
+      if (handle) {
+        return;
+      }
+
       out.beginArray();
+
+      CycleContextHolder.push(collection);
+
       for (E element : collection) {
         elementTypeAdapter.write(out, element);
       }
+
+      CycleContextHolder.pop();
+
       out.endArray();
     }
   }

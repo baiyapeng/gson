@@ -16,15 +16,8 @@
 
 package com.google.gson.internal.bind;
 
-import com.google.gson.FieldNamingStrategy;
-import com.google.gson.Gson;
-import com.google.gson.JsonIOException;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.ReflectionAccessFilter;
+import com.google.gson.*;
 import com.google.gson.ReflectionAccessFilter.FilterResult;
-import com.google.gson.TypeAdapter;
-import com.google.gson.TypeAdapterFactory;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.internal.$Gson$Types;
@@ -139,7 +132,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
     }
   }
 
-  private ReflectiveTypeAdapterFactory.BoundField createBoundField(
+  private BoundField createBoundField(
       final Gson context, final Field field, final Method accessor, final String name,
       final TypeToken<?> fieldType, boolean serialize, boolean deserialize,
       final boolean blockInaccessible) {
@@ -161,7 +154,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
 
     @SuppressWarnings("unchecked")
     final TypeAdapter<Object> typeAdapter = (TypeAdapter<Object>) mapped;
-    return new ReflectiveTypeAdapterFactory.BoundField(name, field.getName(), serialize, deserialize) {
+    return new BoundField(name, field.getName(), serialize, deserialize) {
       @Override void write(JsonWriter writer, Object source)
           throws IOException, IllegalAccessException {
         if (!serialized) return;
@@ -360,7 +353,15 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
         return;
       }
 
+      boolean handle = CycleContextHolder.handle(out, value);
+      if (handle) {
+        return;
+      }
+
       out.beginObject();
+
+      CycleContextHolder.push(value);
+
       try {
         for (BoundField boundField : boundFields.values()) {
           boundField.write(out, value);
@@ -368,6 +369,9 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
       } catch (IllegalAccessException e) {
         throw ReflectionHelper.createExceptionForUnexpectedIllegalAccess(e);
       }
+
+      CycleContextHolder.pop();
+
       out.endObject();
     }
 

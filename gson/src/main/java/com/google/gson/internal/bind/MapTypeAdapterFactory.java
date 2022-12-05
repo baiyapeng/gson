@@ -16,12 +16,7 @@
 
 package com.google.gson.internal.bind;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.TypeAdapter;
-import com.google.gson.TypeAdapterFactory;
+import com.google.gson.*;
 import com.google.gson.internal.$Gson$Types;
 import com.google.gson.internal.ConstructorConstructor;
 import com.google.gson.internal.JsonReaderInternalAccess;
@@ -201,11 +196,23 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
       }
 
       if (!complexMapKeySerialization) {
+
+        boolean handle = CycleContextHolder.handle(out, map);
+        if (handle) {
+          return;
+        }
+
         out.beginObject();
+
+        CycleContextHolder.push(map);
+
         for (Map.Entry<K, V> entry : map.entrySet()) {
           out.name(String.valueOf(entry.getKey()));
           valueTypeAdapter.write(out, entry.getValue());
         }
+
+        CycleContextHolder.pop();
+
         out.endObject();
         return;
       }

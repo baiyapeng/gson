@@ -167,6 +167,12 @@ public final class GsonBuilder {
     return this;
   }
 
+  public GsonBuilder setCycleHandleStrategy(CycleHandleStrategy cycleHandleStrategy) {
+    Objects.requireNonNull(cycleHandleStrategy);
+    CycleContextHolder.setCycleHandleStrategy(cycleHandleStrategy);
+    return this;
+  }
+
   /**
    * Configures Gson to excludes all class fields that have the specified modifiers. By default,
    * Gson will exclude all fields marked {@code transient} or {@code static}. This method will
@@ -520,7 +526,7 @@ public final class GsonBuilder {
    * call this method or {@link #setDateFormat(int)} multiple times, but only the last invocation
    * will be used to decide the serialization format.
    *
-   * <p>The date format will be used to serialize and deserialize {@link java.util.Date} and in case
+   * <p>The date format will be used to serialize and deserialize {@link Date} and in case
    * the {@code java.sql} module is present, also {@link java.sql.Timestamp} and {@link java.sql.Date}.
    *
    * <p>Note that this pattern must abide by the convention provided by {@code SimpleDateFormat}
@@ -543,7 +549,7 @@ public final class GsonBuilder {
    * invocation will be used to decide the serialization format.
    *
    * <p>Note that this style value should be one of the predefined constants in the
-   * {@code DateFormat} class. See the documentation in {@link java.text.DateFormat} for more
+   * {@code DateFormat} class. See the documentation in {@link DateFormat} for more
    * information on the valid style constants.</p>
    *
    * @param style the predefined date style that date objects will be serialized/deserialized
@@ -563,7 +569,7 @@ public final class GsonBuilder {
    * invocation will be used to decide the serialization format.
    *
    * <p>Note that this style value should be one of the predefined constants in the
-   * {@code DateFormat} class. See the documentation in {@link java.text.DateFormat} for more
+   * {@code DateFormat} class. See the documentation in {@link DateFormat} for more
    * information on the valid style constants.</p>
    *
    * @param dateStyle the predefined date style that date objects will be serialized/deserialized
