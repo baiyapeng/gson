@@ -21,10 +21,10 @@ public class CycleDeserializationContextHolder {
     private static final ThreadLocal<Deque<Object>> DEQUE_THREAD_LOCAL = new ThreadLocal<>();
 
     public static void compute(Object obj) {
-        if (obj != null && obj.getClass().isArray()) {
+        /*if (obj != null && obj.getClass().isArray()) {
             long address = VM.current().addressOf(pop());
             detect(obj, obj, address);
-        }
+        }*/
     }
 
     public static void detect(Object source, Object obj, long address) {
